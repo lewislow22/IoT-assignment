@@ -7,8 +7,8 @@ Hold down boot,
 press and release reset,
 release boot
 
-Upload
-Reset
+Upload,
+reset
 
 Monitor
 
