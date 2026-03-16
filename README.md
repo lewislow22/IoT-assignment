@@ -3,9 +3,9 @@ Assignment (important)
 
 Re burn new code:
 
-Hold down boot
-Press and release reset
-Release boot
+Hold down boot,
+press and release reset,
+release boot
 
 Upload
 Reset
