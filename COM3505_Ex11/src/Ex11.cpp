@@ -13,17 +13,48 @@
 // running directly on the ESP32
 #include <WebServer.h>
 
+// include the time for the animations
+#include <time.h>
+
 
 // ---------------- Wi-Fi credentials ----------------
 // SSID and password of the wireless network.
 // These must match the Wi-Fi network you want the ESP32 to connect to.
-const char* ssid = "VM7572372";
-const char* password = "xxxxxx"; // CHANGE THIS TO YOUR WIFI PASSWORD
+const char* ssid = "BTHub6-MC2C";
+const char* password = "AVxMXvh9pRew"; // CHANGE THIS TO YOUR WIFI PASSWORD
 
 // ---------------- TMP36 Sensor Pin ----------------
 // GPIO36 is an analog input pin on the ESP32
 // where the TMP36 temperature sensor output is connected.
-#define TEMP_PIN 36
+#define TEMP_PIN 13
+#define LED0_PIN 12
+#define LED1_PIN 11
+#define LED2_PIN 10
+#define LED3_PIN 9
+#define LED4_PIN 6
+#define LED5_PIN 5
+
+// all of the LEDs used to turn them all of before new patetrn is shown
+const int ALL_LEDS[6] = {LED0_PIN, LED1_PIN, LED2_PIN, LED3_PIN, LED4_PIN, LED5_PIN};
+
+// LED pattern, each array is what should be on in the current "frame"
+const int LED_PATTERN[6][2] = {
+  {0, 1},
+  {1, 2},
+  {2, 3},
+  {3, 4},
+  {4, 5},
+  {5, 0}
+};
+
+// Loop counter for looping the LED patterns
+unsigned long loopIteration = 0;
+
+// keeps track of what frame of the loop patetrn should be shown
+int frame = 0;
+
+// set up the timer for the animations
+time_t seconds;
 
 // ---------------- ADC Settings ----------------
 
@@ -64,8 +95,7 @@ float readTemperature()
   // Convert voltage to temperature using TMP36 formula
   // TMP36 output = 500 mV offset + 10 mV per °C
   // Temperature (°C) = (Voltage - 0.5) * 100
-  float tempC = -(voltage - 0.5) * 100.0;
-  Serial.println(tempC);
+  float tempC = (voltage - 0.5) * 100.0;
   return tempC;
 }
 
@@ -189,6 +219,16 @@ void handleTemp()
 }
 
 
+// handles the led patterns
+void handleLEDs(int frame){
+  for (int LED : ALL_LEDS){
+    digitalWrite(LED, LOW);
+  }
+  for (int index : LED_PATTERN[frame]){
+    digitalWrite(ALL_LEDS[index], HIGH);
+  }
+}
+
 
 // ---------------------------------------------------
 // Function: setup()
@@ -196,6 +236,7 @@ void handleTemp()
 // ---------------------------------------------------
 void setup()
 {
+
   // Start serial communication for debugging
   Serial.begin(115200);
 
@@ -236,8 +277,15 @@ void setup()
 
   // Start the web server
   server.begin();
-}
 
+  // Configure GPIO pin connected to the external LED
+  pinMode(LED0_PIN, OUTPUT);
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+  pinMode(LED3_PIN, OUTPUT);
+  pinMode(LED4_PIN, OUTPUT);
+  pinMode(LED5_PIN, OUTPUT);
+}
 
 
 // ---------------------------------------------------
@@ -246,7 +294,17 @@ void setup()
 // ---------------------------------------------------
 void loop()
 {
+  loopIteration++;
+
   // Handle incoming client requests
   // (e.g., browser requests for webpage or temperature)
   server.handleClient();
+  
+  if (loopIteration % 500 == 0){
+    int frames = sizeof(LED_PATTERN) / sizeof(LED_PATTERN[0]);
+
+    seconds = time (NULL);
+
+    handleLEDs(seconds % frames);
+  }
 }
