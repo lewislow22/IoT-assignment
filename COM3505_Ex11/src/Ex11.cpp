@@ -16,6 +16,10 @@
 // include the time for the animations
 #include <time.h>
 
+// JSON
+#include <HTTPClient.h>
+// #include <ArduinoJson.h>
+
 
 // ---------------- Wi-Fi credentials ----------------
 // SSID and password of the wireless network.
@@ -287,6 +291,23 @@ void setup()
   pinMode(LED5_PIN, OUTPUT);
 }
 
+void sendData() {
+  HTTPClient http;
+  http.begin("http://127.0.0.1/:5000/data");
+  http.addHeader("Content-Type", "application/json");
+
+  // StaticJsonDocument<200> doc;
+  // doc["temperature"] = readTemperature();
+
+  // String json;
+  // serializeJson(doc, json);
+
+  String json = ("{\"temperature\":"+String(readTemperature())+"}");
+
+  http.POST(json);
+  http.end();
+}
+
 
 // ---------------------------------------------------
 // Function: loop()
@@ -306,5 +327,6 @@ void loop()
     seconds = time (NULL);
 
     handleLEDs(seconds % frames);
+    sendData();
   }
 }

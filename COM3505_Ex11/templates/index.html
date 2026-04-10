@@ -1,0 +1,13 @@
+<h1>HELLO!!</h1>
+
+<p>Temperature: <span id="temp">--</span></p>
+
+<script>
+    setInterval(() => {
+        fetch('/get_data')
+            .then(response => response.json())
+            .then(data => {
+            document.getElementById("temp").innerText = data.temperature;
+            });
+        }, 1000);
+</script>
