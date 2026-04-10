@@ -15,6 +15,9 @@
 
 // include the time for the animations
 #include <time.h>
+#include <string>
+#include <iostream>
+using namespace std;
 
 // JSON
 #include <HTTPClient.h>
@@ -42,13 +45,25 @@ const char* password = "AVxMXvh9pRew"; // CHANGE THIS TO YOUR WIFI PASSWORD
 const int ALL_LEDS[6] = {LED0_PIN, LED1_PIN, LED2_PIN, LED3_PIN, LED4_PIN, LED5_PIN};
 
 // LED pattern, each array is what should be on in the current "frame"
-const int LED_PATTERN[6][2] = {
+const int LED_PATTERN_WAVE[6][2] = {
   {0, 1},
   {1, 2},
   {2, 3},
   {3, 4},
   {4, 5},
   {5, 0}
+};
+
+const int LED_PATTERN_CURTAIN[4][2] = {
+  {0, 5},
+  {1, 4},
+  {2, 3},
+  {-1, -1}
+};
+
+const int LED_PATTERN_CHECKER[2][3] = {
+  {0, 2, 4},
+  {1, 3, 5}
 };
 
 // Loop counter for looping the LED patterns
@@ -228,8 +243,21 @@ void handleLEDs(int frame){
   for (int LED : ALL_LEDS){
     digitalWrite(LED, LOW);
   }
-  for (int index : LED_PATTERN[frame]){
-    digitalWrite(ALL_LEDS[index], HIGH);
+  for (int index : LED_PATTERN_CHECKER[frame]){
+    if (index != -1){
+      digitalWrite(ALL_LEDS[index], HIGH);
+    }
+  }
+}
+
+void handleLEDsTemp(float temp){
+  for (int LED : ALL_LEDS){
+    digitalWrite(LED, LOW);
+  }
+  for (int i = 0; i < 5; i++) {
+    if ((i+1)*5 < temp) {
+      digitalWrite(ALL_LEDS[5-i], HIGH);
+    }
   }
 }
 
@@ -303,7 +331,6 @@ void sendData() {
   // serializeJson(doc, json);
 
   String json = ("{\"temperature\":"+String(readTemperature())+"}");
-
   http.POST(json);
   http.end();
 }
@@ -322,11 +349,12 @@ void loop()
   server.handleClient();
   
   if (loopIteration % 500 == 0){
-    int frames = sizeof(LED_PATTERN) / sizeof(LED_PATTERN[0]);
+    int frames = sizeof(LED_PATTERN_CHECKER) / sizeof(LED_PATTERN_CHECKER[0]);
 
     seconds = time (NULL);
 
-    handleLEDs(seconds % frames);
+    //handleLEDs(seconds % frames);
+    handleLEDsTemp(readTemperature());
     sendData();
   }
 }
