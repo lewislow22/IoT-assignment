@@ -1,13 +1,27 @@
-<h1>HELLO!!</h1>
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <title>ESP32 Temperature Monitor</title>
+</head>
 
-<p>Temperature: <span id="temp">--</span></p>
+<body>
 
-<script>
-    setInterval(() => {
-        fetch('/get_data')
-            .then(response => response.json())
-            .then(data => {
-            document.getElementById("temp").innerText = data.temperature;
-            });
-        }, 1000);
-</script>
+    <h2>ESP32 Temperature Monitor</h2>
+
+    <div class="card">Temperature: <span id="temp" class="temp">--</span> °C</div>
+
+    <div class="card">LED pattern: <span id="pattern">--</span></div>
+
+
+    <script>
+        setInterval(() => {
+            fetch('/get_data')
+                .then(response => response.json())
+                .then(data => {
+                document.getElementById("temp").innerText = data.temperature;
+                document.getElementById("pattern").innerText = data.led;
+                });
+            }, 1000);
+    </script>
+
+</body>

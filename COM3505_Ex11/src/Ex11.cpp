@@ -75,6 +75,9 @@ int frame = 0;
 // set up the timer for the animations
 time_t seconds;
 
+// store current LED pattern. "wave","curtain","checker" or "temp"
+String pattern = "";
+
 // ---------------- ADC Settings ----------------
 
 // Maximum ADC value when using 12-bit resolution
@@ -117,109 +120,6 @@ float readTemperature()
   float tempC = (voltage - 0.5) * 100.0;
   return tempC;
 }
-
-
-
-// ---------------------------------------------------
-// Function: handleRoot()
-// This function sends the main web page to the browser
-// when a user visits the ESP32 IP address.
-// ---------------------------------------------------
-void handleRoot()
-{
-
-  // HTML webpage stored as a raw string literal
-  // This page displays the temperature and updates
-  // automatically every 2 seconds using JavaScript.
-  String html = R"rawliteral(
-<!DOCTYPE html>
-<html>
-
-<head>
-<title>ESP32 Temperature Monitor</title>
-
-<style>
-
-/* Page styling */
-
-body{
-font-family: Arial;
-text-align:center;
-background:#f4f4f4;
-}
-
-/* Card-style container */
-
-.card{
-background:white;
-width:300px;
-margin:auto;
-padding:20px;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-
-/* Temperature display style */
-
-.temp{
-font-size:40px;
-color:#0077cc;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h2>ESP32 Temperature Monitor</h2>
-
-<div class="card">
-
-Temperature
-
-<div class="temp" id="temp">-- °C</div>
-
-</div>
-
-
-<script>
-
-// Function to request temperature data from ESP32
-function updateTemp()
-{
-
-// Fetch data from /temp endpoint
-fetch("/temp")
-
-.then(response => response.text())
-
-.then(data => {
-
-// Update the temperature displayed on the page
-document.getElementById("temp").innerHTML = data + " °C";
-
-});
-
-}
-
-// Call updateTemp every 2 seconds
-setInterval(updateTemp,2000);
-
-// Also run immediately when page loads
-updateTemp();
-
-</script>
-
-</body>
-
-</html>
-)rawliteral";
-
-  // Send the webpage to the browser
-  server.send(200,"text/html",html);
-}
-
 
 
 // ---------------------------------------------------
@@ -298,17 +198,6 @@ void setup()
   Serial.println(WiFi.localIP());
 
 
-  // Define web server routes
-
-  // When browser visits "/"
-  server.on("/",handleRoot);
-
-  // When browser requests "/temp"
-  server.on("/temp",handleTemp);
-
-
-  // Start the web server
-  server.begin();
 
   // Configure GPIO pin connected to the external LED
   pinMode(LED0_PIN, OUTPUT);
@@ -319,18 +208,23 @@ void setup()
   pinMode(LED5_PIN, OUTPUT);
 }
 
+// ---------------------------------------------------
+// Function: sendData()
+// Posts sensor readings and current LED pattern to flask server via JSON
+// ---------------------------------------------------
 void sendData() {
   HTTPClient http;
-  http.begin("http://127.0.0.1/:5000/data");
+  http.begin("http://127.0.0.1:5000/data");
   http.addHeader("Content-Type", "application/json");
 
-  // StaticJsonDocument<200> doc;
-  // doc["temperature"] = readTemperature();
+  //StaticJsonDocument<200> doc;
+  //doc["temperature"] = readTemperature();
 
-  // String json;
-  // serializeJson(doc, json);
+  //String json;
+  //serializeJson(doc, json);
 
-  String json = ("{\"temperature\":"+String(readTemperature())+"}");
+  String json = ("{\"temperature\":"+String(temperatureC)+",\"led\":"+ pattern +"}");
+  
   http.POST(json);
   http.end();
 }
@@ -349,12 +243,24 @@ void loop()
   server.handleClient();
   
   if (loopIteration % 500 == 0){
-    int frames = sizeof(LED_PATTERN_CHECKER) / sizeof(LED_PATTERN_CHECKER[0]);
+    if (pattern == "temp") {
+      handleLEDsTemp(readTemperature());
+    }
+    else {
+      seconds = time (NULL);
 
-    seconds = time (NULL);
-
-    //handleLEDs(seconds % frames);
-    handleLEDsTemp(readTemperature());
+      int frames = sizeof(LED_PATTERN_CHECKER) / sizeof(LED_PATTERN_CHECKER[0]);
+      if (pattern == "wave") {
+        frames = sizeof(LED_PATTERN_WAVE) / sizeof(LED_PATTERN_WAVE[0]);
+      }
+      else if (pattern == "curtain") {
+        frames = sizeof(LED_PATTERN_CURTAIN) / sizeof(LED_PATTERN_CURTAIN[0]);
+      }
+      handleLEDs(seconds % frames);
+    }
+    
+    // Display info on server
+    handleTemp();
     sendData();
   }
 }
