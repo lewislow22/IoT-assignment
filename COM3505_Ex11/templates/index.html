@@ -12,7 +12,16 @@
 
     <div class="card">LED pattern: <span id="pattern">--</span></div>
 
+    <form action="/set_led" method="POST">
+        <input class="card" type="submit" name="submit_button" value="wave">
 
+        <input class="card" type="submit" name="submit_button" value="curtain">
+
+        <input class="card" type="submit" name="submit_button" value="checker">
+
+        <input class="card" type="submit" name="submit_button" value="temp">
+    </form>
+    
     <script>
         setInterval(() => {
             fetch('/get_data')

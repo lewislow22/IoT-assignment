@@ -143,9 +143,25 @@ void handleLEDs(int frame){
   for (int LED : ALL_LEDS){
     digitalWrite(LED, LOW);
   }
-  for (int index : LED_PATTERN_CHECKER[frame]){
-    if (index != -1){
-      digitalWrite(ALL_LEDS[index], HIGH);
+  if (pattern == "wave") {
+    for (int index : LED_PATTERN_WAVE[frame]){
+      if (index != -1){
+        digitalWrite(ALL_LEDS[index], HIGH);
+      }
+    }
+  }
+  else if (pattern == "curtain") {
+    for (int index : LED_PATTERN_CURTAIN[frame]){
+      if (index != -1){
+        digitalWrite(ALL_LEDS[index], HIGH);
+      }
+    }
+  }
+  else {
+    for (int index : LED_PATTERN_CHECKER[frame]){
+      if (index != -1){
+        digitalWrite(ALL_LEDS[index], HIGH);
+      }
     }
   }
 }
@@ -214,7 +230,7 @@ void setup()
 // ---------------------------------------------------
 void sendData() {
   HTTPClient http;
-  http.begin("http://127.0.0.1:5000/data");
+  http.begin("http://192.168.1.254:5000/data"); // Need to replace with your computers ip (found with ipconfig)
   http.addHeader("Content-Type", "application/json");
 
   //StaticJsonDocument<200> doc;
@@ -223,9 +239,28 @@ void sendData() {
   //String json;
   //serializeJson(doc, json);
 
-  String json = ("{\"temperature\":"+String(temperatureC)+",\"led\":"+ pattern +"}");
+  String json = ("{\"temperature\":"+String(temperatureC)+",\"led\":\""+ pattern +"\"}");
   
   http.POST(json);
+  http.end();
+}
+// ---------------------------------------------------
+// Function: getPattern()
+// Receives updated pattern from flask server via JSON
+// ---------------------------------------------------
+void getPattern() {
+  HTTPClient http;
+  http.begin("http://192.168.1.254:5000/get_led"); // Need to replace with your computers ip (found with ipconfig)
+
+  int httpCode = http.GET();
+
+  if (httpCode == 200) {
+    String payload = http.getString();
+    if (payload.indexOf("wave") != -1) pattern = "wave";
+    else if (payload.indexOf("curtain") != -1) pattern = "curtain";
+    else if (payload.indexOf("checker") != -1) pattern = "checker";
+    else if (payload.indexOf("temp") != -1) pattern = "temp";
+  }
   http.end();
 }
 
@@ -243,6 +278,8 @@ void loop()
   server.handleClient();
   
   if (loopIteration % 500 == 0){
+    getPattern(); // Update pattern variable from server buttons
+
     if (pattern == "temp") {
       handleLEDsTemp(readTemperature());
     }
