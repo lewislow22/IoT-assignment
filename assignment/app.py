@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 
 latest_data = {}
+led_pattern = "checker"
 
 @app.route('/')
 def index():
