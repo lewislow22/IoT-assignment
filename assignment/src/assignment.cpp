@@ -12,11 +12,20 @@
 #include <iostream>
 using namespace std;
 
+// Include WiFi library for network connection
+#include <WiFi.h>
+
 // JSON
 #include <HTTPClient.h>
 
 // MUST DO - update with you own computer's IP address (found with 'ipconfig' command)
 const String IP_ADDRESS = "192.168.1.254";
+
+// ---------------- Wi-Fi credentials ----------------
+// SSID and password of the wireless network.
+// These must match the Wi-Fi network you want the ESP32 to connect to.
+const char* ssid = "BTHub6-MC2C";
+const char* password = "AVxMXvh9pRew"; // CHANGE THIS TO YOUR WIFI PASSWORD
 
 // ---------------- TMP36 Sensor Pin ----------------
 // GPIO36 is an analog input pin on the ESP32
@@ -64,7 +73,7 @@ int frame = 0;
 time_t seconds;
 
 // store current LED pattern. "wave","curtain","checker" or "temp"
-String pattern = "";
+String pattern = "checker";
 
 // ---------------- ADC Settings ----------------
 
@@ -154,12 +163,28 @@ void setup()
   // Start serial communication for debugging
   Serial.begin(115200);
 
-
   // Set ADC resolution to 12 bits (0-4095)
   analogReadResolution(12);
 
   // Increase ADC input range for better measurement
   analogSetPinAttenuation(TEMP_PIN, ADC_11db);
+
+    // Start connecting to WiFi
+  WiFi.begin(ssid,password);
+
+  Serial.print("Connecting to WiFi");
+
+  // Wait until connection is established
+  while(WiFi.status()!=WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+
+  // Once connected, print IP address
+  Serial.println("");
+  Serial.print("Connected! IP: ");
+  Serial.println(WiFi.localIP());
 
   // Configure GPIO pin connected to the external LED
   pinMode(LED0_PIN, OUTPUT);
@@ -182,7 +207,10 @@ void sendData() {
   // The 1 in String() limits it to 1 d.p.
   String json = ("{\"temperature\":"+String(temperatureC,1)+",\"led\":\""+ pattern +"\"}");
   
-  http.POST(json);
+  int httpCode = http.POST(json);
+  if (httpCode != 200) {
+    Serial.println("HTTP POST failed");
+  }
   http.end();
 }
 
@@ -203,6 +231,9 @@ void getPattern() {
     else if (payload.indexOf("curtain") != -1) pattern = "curtain";
     else if (payload.indexOf("checker") != -1) pattern = "checker";
     else if (payload.indexOf("temp") != -1) pattern = "temp";
+  }
+  else {
+    Serial.println("HTTP GET failed");
   }
   http.end();
 }
