@@ -19,13 +19,16 @@ using namespace std;
 #include <HTTPClient.h>
 
 // MUST DO - update with you own computer's IP address (found with 'ipconfig' command)
-const String IP_ADDRESS = "192.168.1.254";
+const String IP_ADDRESS = "192.168.1.92";
+
+// Client used to connect to the external server
+WiFiClient client;
 
 // ---------------- Wi-Fi credentials ----------------
 // SSID and password of the wireless network.
 // These must match the Wi-Fi network you want the ESP32 to connect to.
-const char* ssid = "BTHub6-MC2C";
-const char* password = "AVxMXvh9pRew"; // CHANGE THIS TO YOUR WIFI PASSWORD
+const char* ssid = "BTB-3ZWF2K";
+const char* password = "Rx6gYJN4hRAk3nTc"; // CHANGE THIS TO YOUR WIFI PASSWORD
 
 // ---------------- TMP36 Sensor Pin ----------------
 // GPIO36 is an analog input pin on the ESP32
@@ -200,6 +203,7 @@ void setup()
 // Posts sensor readings and current LED pattern to flask server via JSON
 // ---------------------------------------------------
 void sendData() {
+  
   HTTPClient http;
   http.begin("http://"+IP_ADDRESS+":5000/data");      // MAKE SURE TO UPDATE WITH YOUR IP
   http.addHeader("Content-Type", "application/json");
@@ -209,7 +213,7 @@ void sendData() {
   
   int httpCode = http.POST(json);
   if (httpCode != 200) {
-    Serial.println("HTTP POST failed");
+    Serial.println("HTTP POST failed: " + String(httpCode));
   }
   http.end();
 }
@@ -227,13 +231,13 @@ void getPattern() {
 
   if (httpCode == 200) {
     String payload = http.getString();
-    if (payload.indexOf("wave") != -1) pattern = "wave";
-    else if (payload.indexOf("curtain") != -1) pattern = "curtain";
-    else if (payload.indexOf("checker") != -1) pattern = "checker";
-    else if (payload.indexOf("temp") != -1) pattern = "temp";
+    if (payload.indexOf("Wave") != -1) pattern = "wave";
+    else if (payload.indexOf("Curtain") != -1) pattern = "curtain";
+    else if (payload.indexOf("Checker") != -1) pattern = "checker";
+    else if (payload.indexOf("Temperature") != -1) pattern = "temp";
   }
   else {
-    Serial.println("HTTP GET failed");
+    Serial.println("HTTP GET failed: " + String(httpCode));
   }
   http.end();
 }
