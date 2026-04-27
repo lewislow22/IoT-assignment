@@ -6,6 +6,8 @@
 // It also displays a series of LED patterns that are
 // controlled by buttons on the flask server.
 
+// IMPORTANT: UPDATE THE WIFI CREDENTIALS BELOW TO CONNECT CORRECTLY
+
 // include the time for the animations
 #include <time.h>
 #include <string>
@@ -18,17 +20,15 @@ using namespace std;
 // JSON
 #include <HTTPClient.h>
 
-// MUST DO - update with you own computer's IP address (found with 'ipconfig' command)
-const String IP_ADDRESS = "192.168.1.92";
+// ---------------- Wi-Fi credentials (NEED CHANGING) ----------------
+// SSID and password of the wireless network.
+// These must match the Wi-Fi network you want the ESP32 to connect to.
+const char* ssid = "BTB-3ZWF2K"; // CHANGE THIS TO YOUR WIFI'S SSID
+const char* password = "Rx6gYJN4hRAk3nTc"; // CHANGE THIS TO YOUR WIFI PASSWORD
+const String IP_ADDRESS = "192.168.1.92"; // CHANGE THIS TO YOUR OWN COMPUTER'S IP ADDRESS (found with 'ipconfig' command)
 
 // Client used to connect to the external server
 WiFiClient client;
-
-// ---------------- Wi-Fi credentials ----------------
-// SSID and password of the wireless network.
-// These must match the Wi-Fi network you want the ESP32 to connect to.
-const char* ssid = "BTB-3ZWF2K";
-const char* password = "Rx6gYJN4hRAk3nTc"; // CHANGE THIS TO YOUR WIFI PASSWORD
 
 // ---------------- TMP36 Sensor Pin ----------------
 // GPIO36 is an analog input pin on the ESP32
