@@ -69,7 +69,7 @@ const int LED_PATTERN_CHECKER[2][3] = {
 // Loop counter for looping the LED patterns
 unsigned long loopIteration = 0;
 
-// keeps track of what frame of the loop patetrn should be shown
+// keeps track of what frame of the loop pattern should be shown
 int frame = 0;
 
 // set up the timer for the animations
@@ -116,7 +116,7 @@ float readTemperature()
 }
 
 
-// handles the led patterns
+// Handles the LED patterns
 void handleLEDs(int frame){
   for (int LED : ALL_LEDS){
     digitalWrite(LED, LOW);
@@ -144,7 +144,9 @@ void handleLEDs(int frame){
   }
 }
 
-void handleLEDsTemp(float temp){
+// Handles the Temperature LED pattern
+void handleLEDsTemp(){
+  float temp = readTemperature();
   for (int LED : ALL_LEDS){
     digitalWrite(LED, LOW);
   }
@@ -153,6 +155,25 @@ void handleLEDsTemp(float temp){
       digitalWrite(ALL_LEDS[5-i], HIGH);
     }
   }
+}
+
+// Updates
+void updateLEDs() {
+    if (pattern == "temp") {
+      handleLEDsTemp();
+    }
+    else {
+      seconds = time (NULL);
+
+      int frames = sizeof(LED_PATTERN_CHECKER) / sizeof(LED_PATTERN_CHECKER[0]);
+      if (pattern == "wave") {
+        frames = sizeof(LED_PATTERN_WAVE) / sizeof(LED_PATTERN_WAVE[0]);
+      }
+      else if (pattern == "curtain") {
+        frames = sizeof(LED_PATTERN_CURTAIN) / sizeof(LED_PATTERN_CURTAIN[0]);
+      }
+      handleLEDs(seconds % frames);
+    }
 }
 
 
@@ -242,36 +263,23 @@ void getPattern() {
   http.end();
 }
 
-
+unsigned long lastLedUpdate = 0;
+unsigned long lastServerUpdate = 0;
 // ---------------------------------------------------
 // Function: loop()
 // Runs continuously after setup()
 // ---------------------------------------------------
 void loop()
 {
-  loopIteration++;
   
-  if (loopIteration % 500 == 0){
+  if (millis() - lastLedUpdate >= 250){
+    lastLedUpdate = millis();
+    updateLEDs(); //Update the LEDs pattern
+  }
+
+  if (millis() - lastServerUpdate >= 2000) {
+    lastServerUpdate = millis();
     getPattern(); // Update pattern variable from server buttons
-    float temp = readTemperature();
-
-    if (pattern == "temp") {
-      handleLEDsTemp(temp);
-    }
-    else {
-      seconds = time (NULL);
-
-      int frames = sizeof(LED_PATTERN_CHECKER) / sizeof(LED_PATTERN_CHECKER[0]);
-      if (pattern == "wave") {
-        frames = sizeof(LED_PATTERN_WAVE) / sizeof(LED_PATTERN_WAVE[0]);
-      }
-      else if (pattern == "curtain") {
-        frames = sizeof(LED_PATTERN_CURTAIN) / sizeof(LED_PATTERN_CURTAIN[0]);
-      }
-      handleLEDs(seconds % frames);
-    }
-    
-    // Display info on server
-    sendData();
+    sendData(); // Display info on server
   }
 }
