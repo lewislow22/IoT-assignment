@@ -78,6 +78,8 @@ time_t seconds;
 // store current LED pattern. "wave","curtain","checker" or "temp"
 String pattern = "checker";
 
+IPAddress e;
+
 // ---------------- ADC Settings ----------------
 
 // Maximum ADC value when using 12-bit resolution
@@ -208,7 +210,8 @@ void setup()
   // Once connected, print IP address
   Serial.println("");
   Serial.print("Connected! IP: ");
-  Serial.println(WiFi.localIP());
+  e = WiFi.localIP();
+  Serial.println(e);// WiFi.localIP());
 
   // Configure GPIO pin connected to the external LED
   pinMode(LED0_PIN, OUTPUT);
@@ -281,5 +284,7 @@ void loop()
     lastServerUpdate = millis();
     getPattern(); // Update pattern variable from server buttons
     sendData(); // Display info on server
+    Serial.print("IP: ");
+    Serial.println(e);
   }
 }
